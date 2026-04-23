@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ El Método</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #1e1e2e;
+    --gold: #f5c842;
+    --gold-dim: #a8891d;
+    --green: #22c55e;
+    --green-dim: #14532d;
+    --yellow: #f59e0b;
+    --yellow-dim: #78350f;
+    --red: #ef4444;
+    --red-dim: #7f1d1d;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 20px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .header p {
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+
+  .stat-card .label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .stat-card .value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+
+  .value.gold  { color: var(--gold); }
+  .value.green { color: var(--green); }
+  .value.red   { color: var(--red); }
+  .value.text  { color: var(--text); }
+
+  .add-btn {
+    width: 100%;
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    margin-bottom: 22px;
+    transition: opacity 0.15s;
+  }
+
+  .add-btn:hover { opacity: 0.85; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .modal h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+
+  .form-group { margin-bottom: 14px; }
+
+  .form-group label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--gold-dim); }
+
+  .form-group textarea { resize: vertical; min-height: 64px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .preview-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--green);
+    margin-bottom: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.5px;
+    min-height: 38px;
+  }
+
+  .modal-actions { display: flex; gap: 10px; }
+
+  .btn-cancel {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    padding: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .btn-cancel:hover { border-color: var(--muted); }
+
+  .btn-save {
+    flex: 2;
+    background: var(--gold);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    padding: 11px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-save:hover { opacity: 0.85; }
+
+  /* BETS */
+  .bets-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .bet-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 16px 14px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s;
+  }
+
+  .bet-card:hover { transform: translateY(-1px); }
+
+  .bet-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+  }
+
+  .bet-card.estado-jugando::before { background: var(--yellow); }
+  .bet-card.estado-ganada::before  { background: var(--green); }
+  .bet-card.estado-perdida::before { background: var(--red); }
+
+  .bet-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-left: 12px;
+  }
+
+  .bet-desc {
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+    padding-right: 12px;
+    line-height: 1.4;
+  }
+
+  .bet-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .badge-jugando { background: var(--yellow-dim); color: var(--yellow); }
+  .badge-ganada  { background: var(--green-dim);  color: var(--green); }
+  .badge-perdida { background: var(--red-dim);    color: var(--red); }
+
+  .bet-numbers {
+    display: flex;
+    gap: 20px;
+    padding-left: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .num-item .n-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+
+  .num-item .n-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .n-val.cuota   { color: var(--gold); }
+  .n-val.neutro  { color: var(--text); }
+  .n-val.pos     { color: var(--green); }
+  .n-val.neg     { color: var(--red); }
+
+  .bet-actions {
+    display: flex;
+    gap: 8px;
+    padding-left: 12px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: opacity 0.15s;
+  }
+
+  .action-btn:hover { opacity: 0.75; }
+
+  .btn-win  { background: var(--green-dim); color: var(--green); }
+  .btn-lose { background: var(--red-dim);   color: var(--red); }
+  .btn-play { background: var(--yellow-dim); color: var(--yellow); }
+  .btn-edit { background: #1a2233; color: #60a5fa; }
+  .btn-del  { background: #1e1218; color: var(--muted); }
+
+  .acum-note {
+    font-size: 11px;
+    color: var(--muted);
+    padding-left: 12px;
+    margin-top: -4px;
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+
+  .bet-date {
+    font-size: 10px;
+    color: var(--muted);
+    padding-left: 12px;
+    margin-top: 10px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty-state .emoji { font-size: 48px; }
+  .empty-state p { margin-top: 12px; font-size: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ El Método</h1>
+  <p>Sistema de apuestas acumuladas</p>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-card">
+    <div class="label">Capital</div>
+    <div class="value gold" id="stat-capital">$25.000</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Ganadas</div>
+    <div class="value green" id="stat-won">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Perdidas</div>
+    <div class="value red" id="stat-lost">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">En Juego</div>
+    <div class="value text" id="stat-play">0</div>
+  </div>
+</div>
+
+<button class="add-btn" onclick="openModal()">+ NUEVA APUESTA</button>
+
+<div class="bets-list" id="bets-list"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modal-title">Nueva Apuesta</h2>
+
+    <div class="form-group">
+      <label>Descripción</label>
+      <textarea id="f-desc" placeholder="Ej: Boca gana vs River, clásico 20/04..."></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Cuota</label>
+        <input id="f-cuota" type="number" step="0.01" min="1.01" placeholder="1.60" oninput="updatePreview()">
+      </div>
+      <div class="form-group">
+        <label>Monto apostado ($)</label>
+        <input id="f-monto" type="number" step="100" min="1" placeholder="25000" oninput="updatePreview()">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Estado</label>
+      <select id="f-estado">
+        <option value="jugando">🟡 En Juego</option>
+        <option value="ganada">🟢 Ganada</option>
+        <option value="perdida">🔴 Perdida</option>
+      </select>
+    </div>
+
+    <div class="preview-box" id="preview-box">Ingresá cuota y monto para ver la ganancia potencial</div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveBet()">GUARDAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const BASE = 25000;
+  let bets = JSON.parse(localStorage.getItem('elmetodo_v2') || '[]');
+  let editingId = null;
+
+  function fmt(n) {
+    return '$' + Math.round(n).toLocaleString('es-AR');
+  }
+
+  function persist() {
+    localStorage.setItem('elmetodo_v2', JSON.stringify(bets));
+  }
+
+  function calcCapital() {
+    let cap = BASE;
+    for (const b of bets) {
+      if (b.estado === 'ganada')  cap = b.monto * b.cuota;
+      else if (b.estado === 'perdida') cap = BASE;
+    }
+    return cap;
+  }
+
+  function updatePreview() {
+    const cuota = parseFloat(document.getElementById('f-cuota').value) || 0;
+    const monto = parseFloat(document.getElementById('f-monto').value) || 0;
+    const box   = document.getElementById('preview-box');
+    if (cuota > 0 && monto > 0) {
+      const retorno  = monto * cuota;
+      const ganancia = retorno - monto;
+      box.innerHTML  = `Retorno: <b>${fmt(retorno)}</b> &nbsp;·&nbsp; Ganancia neta: <b>+${fmt(ganancia)}</b>`;
+      box.style.color = 'var(--green)';
+    } else {
+      box.textContent = 'Ingresá cuota y monto para ver la ganancia potencial';
+      box.style.color = 'var(--muted)';
+    }
+  }
+
+  function openModal(id = null) {
+    editingId = id;
+    document.getElementById('modal-title').textContent = id !== null ? 'Editar Apuesta' : 'Nueva Apuesta';
+
+    if (id !== null) {
+      const b = bets.find(x => x.id === id);
+      document.getElementById('f-desc').value   = b.desc;
+      document.getElementById('f-cuota').value  = b.cuota;
+      document.getElementById('f-monto').value  = b.monto;
+      document.getElementById('f-estado').value = b.estado;
+    } else {
+      document.getElementById('f-desc').value   = '';
+      document.getElementById('f-cuota').value  = '';
+      document.getElementById('f-monto').value  = Math.round(calcCapital());
+      document.getElementById('f-estado').value = 'jugando';
+    }
+
+    updatePreview();
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    editingId = null;
+  }
+
+  function saveBet() {
+    const desc   = document.getElementById('f-desc').value.trim();
+    const cuota  = parseFloat(document.getElementById('f-cuota').value);
+    const monto  = parseFloat(document.getElementById('f-monto').value);
+    const estado = document.getElementById('f-estado').value;
+
+    if (!desc || isNaN(cuota) || isNaN(monto)) {
+      alert('Completá descripción, cuota y monto.');
+      return;
+    }
+
+    if (editingId !== null) {
+      const idx   = bets.findIndex(x => x.id === editingId);
+      bets[idx]   = { ...bets[idx], desc, cuota, monto, estado };
+    } else {
+      bets.push({
+        id: Date.now(),
+        desc, cuota, monto, estado,
+        fecha: new Date().toLocaleDateString('es-AR')
+      });
+    }
+
+    persist();
+    render();
+    closeModal();
+  }
+
+  function setEstado(id, estado) {
+    const b = bets.find(x => x.id === id);
+    if (b) { b.estado = estado; persist(); render(); }
+  }
+
+  function deleteBet(id) {
+    if (!confirm('¿Eliminar esta apuesta?')) return;
+    bets = bets.filter(x => x.id !== id);
+    persist();
+    render();
+  }
+
+  function render() {
+    let won = 0, lost = 0, playing = 0;
+    bets.forEach(b => {
+      if (b.estado === 'ganada')   won++;
+      if (b.estado === 'perdida')  lost++;
+      if (b.estado === 'jugando')  playing++;
+    });
+
+    document.getElementById('stat-won').textContent   = won;
+    document.getElementById('stat-lost').textContent  = lost;
+    document.getElementById('stat-play').textContent  = playing;
+    document.getElementById('stat-capital').textContent = fmt(calcCapital());
+
+    const list = document.getElementById('bets-list');
+
+    if (bets.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="emoji">📋</div>
+          <p>No hay apuestas todavía.<br>¡Agregá la primera jugada y que arranque El Método!</p>
+        </div>`;
+      return;
+    }
+
+    let html = '';
+
+    bets.forEach((b, i) => {
+      const retorno  = b.monto * b.cuota;
+      const ganancia = retorno - b.monto;
+
+      let estadoLabel, badgeClass, cardClass;
+      if (b.estado === 'ganada')  { estadoLabel = '🟢 Ganada';   badgeClass = 'badge-ganada';  cardClass = 'estado-ganada'; }
+      if (b.estado === 'perdida') { estadoLabel = '🔴 Perdida';  badgeClass = 'badge-perdida'; cardClass = 'estado-perdida'; }
+      if (b.estado === 'jugando') { estadoLabel = '🟡 En Juego'; badgeClass = 'badge-jugando'; cardClass = 'estado-jugando'; }
+
+      const ganStr   = b.estado === 'perdida' ? `-${fmt(b.monto)}` : `+${fmt(ganancia)}`;
+      const ganClass = b.estado === 'perdida' ? 'neg' : 'pos';
+
+      let acumNote = '';
+      if (b.estado === 'ganada')  acumNote = `<div class="acum-note">↗ Capital acumulado: ${fmt(retorno)}</div>`;
+      if (b.estado === 'perdida') acumNote = `<div class="acum-note">↘ Capital reseteado a ${fmt(BASE)}</div>`;
+
+      const btnWin  = b.estado !== 'ganada'   ? `<button class="action-btn btn-win"  onclick="setEstado(${b.id},'ganada')">✅ Ganada</button>` : '';
+      const btnLose = b.estado !== 'perdida'  ? `<button class="action-btn btn-lose" onclick="setEstado(${b.id},'perdida')">❌ Perdida</button>` : '';
+      const btnPlay = b.estado !== 'jugando'  ? `<button class="action-btn btn-play" onclick="setEstado(${b.id},'jugando')">🟡 En juego</button>` : '';
+
+      html += `
+        <div class="bet-card ${cardClass}">
+          <div class="bet-header">
+            <div class="bet-desc">#${i + 1} — ${b.desc}</div>
+            <span class="bet-badge ${badgeClass}">${estadoLabel}</span>
+          </div>
+          <div class="bet-numbers">
+            <div class="num-item">
+              <div class="n-label">Cuota</div>
+              <div class="n-val cuota">${b.cuota.toFixed(2)}</div>
+            </div>
+            <div class="num-item">
+              <div class="n-label">Apostado</div>
+              <div class="n-val neutro">${fmt(b.monto)}</div>
+            </div>
+            <div class="num-item">
+              <div class="n-label">Retorno Total</div>
+              <div class="n-val neutro">${fmt(retorno)}</div>
+            </div>
+            <div class="num-item">
+              <div class="n-label">${b.estado === 'perdida' ? 'Pérdida' : 'Ganancia Neta'}</div>
+              <div class="n-val ${ganClass}">${ganStr}</div>
+            </div>
+          </div>
+          ${acumNote}
+          <div class="bet-actions">
+            ${btnWin}${btnLose}${btnPlay}
+            <button class="action-btn btn-edit" onclick="openModal(${b.id})">✏ Editar</button>
+            <button class="action-btn btn-del"  onclick="deleteBet(${b.id})">🗑 Borrar</button>
+          </div>
+          ${b.fecha ? `<div class="bet-date">${b.fecha}</div>` : ''}
+        </div>`;
+    });
+
+    list.innerHTML = html;
+  }
+
+  // Cerrar modal clickeando afuera
+  document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  render();
+</script>
+</body>
+</html>
