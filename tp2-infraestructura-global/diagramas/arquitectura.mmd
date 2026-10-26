@@ -1,0 +1,88 @@
+flowchart TB
+    subgraph CLI["1 · Clientes"]
+        direction LR
+        C["🛒 Comprador<br/>web / app"]
+        M["🏪 Backend del comercio<br/>(ERP / e-commerce)"]
+        D["📊 Dashboard del comercio<br/>(navegador)"]
+        IA["🤖 Agente IA de soporte<br/>(LLM)"]
+    end
+
+    subgraph EDGE["2 · Edge global"]
+        direction LR
+        DNS["Route 53<br/>DNS por latencia + health checks"]
+        CDN["CDN CloudFront<br/>+ WAF + Shield (DDoS)"]
+        S3S[("S3<br/>estáticos del checkout")]
+    end
+
+    subgraph REG["3 · Región (×3: sa-east-1 · us-east-1 · eu-west-1) — 3 zonas de disponibilidad"]
+        direction TB
+        subgraph IN["Entrada"]
+            direction LR
+            LB["Load Balancer ALB<br/>proxy inverso · TLS"]
+            GW["API Gateway<br/>JWT · rate limit · ruteo /v1"]
+            OA["OAuth 2.0 / OIDC<br/>emite JWT · JWKS"]
+        end
+        subgraph K8S["Kubernetes (EKS) — Graceful Shutdown en todos los pods"]
+            direction LR
+            PAY["Payments<br/>COMMANDS<br/>idempotencia · outbox"]
+            QRY["Consultas<br/>QUERIES (CQRS)"]
+            NOT["Notificaciones<br/>Webhooks HMAC"]
+            RT["Realtime<br/>WebSocket"]
+            FIL["Archivos<br/>Presigned URL"]
+            MCP["Servidor MCP<br/>solo lectura"]
+        end
+        subgraph DATA["Datos"]
+            direction LR
+            R[("Redis<br/>caché · sesiones<br/>idempotencia · rate limit")]
+            PGB["PgBouncer<br/>Connection Pool"]
+            DB[("Aurora PostgreSQL<br/>ledger · IDs UUIDv7")]
+            ES[("OpenSearch<br/>modelo de lectura")]
+            S3F[("S3 privado<br/>reportes · evidencias")]
+        end
+        subgraph ASY["Mensajería asincrónica"]
+            direction LR
+            K[["Apache Kafka (MSK)<br/>payments.events<br/>partición = merchant_id"]]
+            Q[["SQS webhooks<br/>reintentos + backoff"]]
+            DLQ[["Dead Letter Queue"]]
+        end
+    end
+
+    TF["🧱 Terraform (IaC)<br/>un módulo · tres regiones"]
+
+    C --> DNS
+    M --> DNS
+    DNS --> CDN
+    CDN -- "estático (caché)" --> S3S
+    CDN -- "/v1 (sin caché)" --> LB
+    LB --> GW
+    GW -- "valida token" --> OA
+    GW --> PAY & QRY & FIL & RT
+    IA -- "MCP" --> MCP
+    MCP --> QRY
+    PAY --> R
+    PAY --> PGB --> DB
+    PAY -- "evento (outbox)" --> K
+    K --> QRY --> ES
+    K --> RT
+    K --> Q --> NOT
+    Q -. "falló N veces" .-> DLQ
+    NOT -- "POST firmado" --> M
+    RT -- "push en vivo" --> D
+    FIL -- "firma URL" --> S3F
+    TF -. "provisiona" .-> REG
+    TF -. "provisiona" .-> EDGE
+
+    classDef cliente fill:#e8f1ff,stroke:#2f6fd6,color:#0b2a5b
+    classDef edge fill:#fff4e0,stroke:#d98a00,color:#5a3a00
+    classDef entrada fill:#f1e8ff,stroke:#7a3fd6,color:#2e0b5b
+    classDef app fill:#e6f7ee,stroke:#1f9d55,color:#0b3d22
+    classDef datos fill:#fdeaea,stroke:#c0392b,color:#5b0b0b
+    classDef asinc fill:#fff0f6,stroke:#c2185b,color:#5b0b2e
+    classDef iac fill:#eeeeee,stroke:#555,color:#111
+    class C,M,D,IA cliente
+    class DNS,CDN,S3S edge
+    class LB,GW,OA entrada
+    class PAY,QRY,NOT,RT,FIL,MCP app
+    class R,PGB,DB,ES,S3F datos
+    class K,Q,DLQ asinc
+    class TF iac

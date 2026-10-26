@@ -1,0 +1,27 @@
+sequenceDiagram
+    autonumber
+    participant B as Comprador
+    participant CDN as CDN
+    participant GW as LB + API Gateway
+    participant P as Payments
+    participant R as Redis
+    participant DB as Aurora (ledger)
+    participant K as Kafka
+    participant N as Notificaciones
+    participant M as Comercio
+    participant WS as Realtime (WS)
+    B->>CDN: Carga el checkout (JS/CSS)
+    B->>GW: POST /v1/payments (JWT + Idempotency-Key)
+    GW->>GW: Valida JWT, rate limit, rutea
+    GW->>P: Reenvía la petición
+    P->>R: SET idem:key NX
+    R-->>P: OK (primera vez)
+    P->>DB: INSERT pago (UUIDv7) + outbox (vía pool)
+    P->>P: Autoriza con la red de tarjetas
+    P-->>B: 201 Created {status: approved}
+    Note over P,K: A partir de acá todo es asincrónico
+    P->>K: payment.approved (relay del outbox)
+    K->>N: consumidor "notificaciones"
+    N->>M: Webhook POST firmado (HMAC)
+    K->>WS: consumidor "realtime"
+    WS-->>M: Dashboard actualizado al instante

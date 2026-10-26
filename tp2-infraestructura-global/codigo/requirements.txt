@@ -1,0 +1,7 @@
+# Solo para los ejemplos que no usan únicamente la librería estándar
+redis>=5.0
+pyjwt>=2.8
+cryptography>=42
+boto3>=1.34
+websockets>=13
+mcp[cli]>=1.2,<2
